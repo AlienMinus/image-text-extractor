@@ -10,15 +10,18 @@
     <div class="container">
         <h2>Upload Image</h2>
         
-        <div id="dropZone" class="drop-zone">
-            <i class="fas fa-cloud-upload-alt fa-3x"></i>
-            <p>Drag & Drop or Click to Upload</p>
-            <button type="button" id="cameraBtn" class="btn-icon" title="Take Photo">
-                <i class="fas fa-camera"></i>
-            </button>
-            <input type="file" id="fileInput" hidden accept="image/*" multiple>
-            <input type="file" id="cameraInput" hidden accept="image/*" capture="environment">
+        <div class="upload-container">
+            <div id="dropZone" class="upload-box">
+                <i class="fas fa-cloud-upload-alt fa-3x"></i>
+                <p>Upload File</p>
+            </div>
+            <div id="cameraBtn" class="upload-box">
+                <i class="fas fa-camera fa-3x"></i>
+                <p>Open Camera</p>
+            </div>
         </div>
+        <input type="file" id="fileInput" hidden accept="image/*" multiple>
+        <input type="file" id="cameraInput" hidden accept="image/*" capture="environment">
 
         <div id="previewContainer" class="preview-container hidden">
             <div class="img-container">
@@ -58,6 +61,7 @@
             
             <div class="button-group">
                 <button onclick="copyToClipboard()" class="btn-secondary" title="Copy to Clipboard"><i class="fas fa-copy"></i></button>
+                <button onclick="correctSpelling()" class="btn-secondary" title="Auto Correct Spelling"><i class="fas fa-magic"></i></button>
                 <button onclick="toggleSTT()" id="sttBtn" class="btn-secondary" title="Dictate (Speech to Text)"><i class="fas fa-microphone"></i></button>
                 <button onclick="downloadAudio('extractedText', 'languageSelect')" class="btn-secondary" title="Download Audio"><i class="fas fa-file-audio"></i></button>
                 <button onclick="speakText('extractedText', 'languageSelect')" class="btn-secondary" title="Read Aloud"><i class="fas fa-volume-up"></i></button>
@@ -85,17 +89,6 @@
                     <button onclick="downloadAudio('translatedText', 'targetLang')" class="btn-secondary" title="Download Audio"><i class="fas fa-file-audio"></i></button>
                     <button onclick="speakText('translatedText', 'targetLang')" class="btn-secondary" title="Read Aloud"><i class="fas fa-volume-up"></i></button>
                 </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="cameraModal" class="camera-modal hidden">
-        <div class="camera-content">
-            <video id="cameraFeed" autoplay playsinline></video>
-            <canvas id="cameraCanvas" class="hidden"></canvas>
-            <div class="camera-controls">
-                <button id="snapBtn" class="btn-primary"><i class="fas fa-camera"></i> Snap</button>
-                <button id="closeCameraBtn" class="btn-secondary"><i class="fas fa-times"></i> Close</button>
             </div>
         </div>
     </div>

@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify, send_file, render_template
 from .ocr import extract_text_from_image
 from .exporters import export_docx, export_pdf, export_xlsx, export_md, export_mp3
 from .translation import translate_text
+from .spell_checker import correct_text
 import os
 import uuid
 
@@ -83,3 +84,15 @@ def generate_audio():
 
     filepath = export_mp3(text, language)
     return send_file(filepath, as_attachment=True, mimetype="audio/mpeg")
+
+
+@main.route("/api/correct", methods=["POST"])
+def correct_spelling():
+    data = request.json
+    text = data.get("text")
+
+    if not text:
+        return jsonify({"error": "No text provided"}), 400
+
+    corrected_text = correct_text(text)
+    return jsonify({"corrected_text": corrected_text})

@@ -18,12 +18,6 @@ const translateActionBtn = document.getElementById('translateActionBtn');
 const translatedText = document.getElementById('translatedText');
 const translationActions = document.getElementById('translationActions');
 const clearTextBtn = document.getElementById('clearTextBtn');
-const cameraModal = document.getElementById('cameraModal');
-const cameraFeed = document.getElementById('cameraFeed');
-const cameraCanvas = document.getElementById('cameraCanvas');
-const snapBtn = document.getElementById('snapBtn');
-const closeCameraBtn = document.getElementById('closeCameraBtn');
-let stream = null;
 
 document.addEventListener('DOMContentLoaded', () => {
     const savedExtracted = localStorage.getItem('extractedText');
@@ -72,39 +66,8 @@ fileInput.addEventListener('change', (e) => {
     if (e.target.files.length) handleFiles(e.target.files);
 });
 
-cameraBtn.addEventListener('click', async (e) => {
-    e.stopPropagation();
-    
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        cameraInput.click(); // Fallback to native input
-        return;
-    }
-
-    try {
-        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-        cameraFeed.srcObject = stream;
-        cameraModal.classList.remove('hidden');
-    } catch (err) {
-        console.error("Camera access error:", err);
-        cameraInput.click(); // Fallback
-    }
-});
-
-closeCameraBtn.addEventListener('click', stopCamera);
-
-snapBtn.addEventListener('click', () => {
-    const context = cameraCanvas.getContext('2d');
-    cameraCanvas.width = cameraFeed.videoWidth;
-    cameraCanvas.height = cameraFeed.videoHeight;
-    context.drawImage(cameraFeed, 0, 0, cameraCanvas.width, cameraCanvas.height);
-    
-    cameraCanvas.toBlob((blob) => {
-        if (blob) {
-            const file = new File([blob], "camera_capture.png", { type: "image/png" });
-            handleFiles([file]);
-        }
-        stopCamera();
-    }, 'image/png');
+cameraBtn.addEventListener('click', () => {
+    cameraInput.click();
 });
 
 cameraInput.addEventListener('change', (e) => {
@@ -115,7 +78,7 @@ clearPreviewBtn.addEventListener('click', () => {
     destroyCropper();
     selectedFiles = [];
     previewContainer.classList.add('hidden');
-    dropZone.classList.remove('hidden');
+    document.querySelector('.upload-container').classList.remove('hidden');
     fileInput.value = '';
     cameraInput.value = '';
 });
@@ -300,14 +263,6 @@ function destroyCropper() {
     cancelCropBtn.classList.add('hidden');
 }
 
-function stopCamera() {
-    if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-        stream = null;
-    }
-    cameraModal.classList.add('hidden');
-}
-
 async function exportFile(format) {
     const text = document.getElementById('extractedText').value;
     if (!text) {
@@ -466,5 +421,26 @@ async function downloadAudio(elementId, langSelectId) {
     } catch (error) {
         console.error('Error:', error);
         alert('Failed to download audio.');
+    }
+}
+
+async function correctSpelling() {
+    const text = document.getElementById('extractedText').value;
+    if (!text) {
+        alert('No text to correct.');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/correct', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: text })
+        });
+        const data = await response.json();
+        document.getElementById('extractedText').value = data.corrected_text;
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Failed to correct spelling.');
     }
 }
