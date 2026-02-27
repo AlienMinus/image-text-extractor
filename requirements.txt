@@ -8,3 +8,4 @@ reportlab
 pypandoc
 gunicorn
 deep-translator
+gTTS
