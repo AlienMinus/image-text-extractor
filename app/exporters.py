@@ -1,5 +1,6 @@
 import os
 import uuid
+import io
 from docx import Document
 from openpyxl import Workbook
 from reportlab.platypus import SimpleDocTemplate, Paragraph
@@ -8,61 +9,57 @@ from reportlab.lib.units import inch
 from reportlab.platypus import Spacer
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib import colors
-import pypandoc
 from gtts import gTTS
-
-EXPORT_FOLDER = "exports"
-os.makedirs(EXPORT_FOLDER, exist_ok=True)
+from xml.sax.saxutils import escape
 
 
 def export_docx(text):
-    filename = os.path.join(EXPORT_FOLDER, str(uuid.uuid4()) + ".docx")
+    buffer = io.BytesIO()
     doc = Document()
     doc.add_paragraph(text)
-    doc.save(filename)
-    return filename
+    doc.save(buffer)
+    buffer.seek(0)
+    return buffer
 
 
 def export_xlsx(text):
-    filename = os.path.join(EXPORT_FOLDER, str(uuid.uuid4()) + ".xlsx")
+    buffer = io.BytesIO()
     wb = Workbook()
     ws = wb.active
 
     for i, line in enumerate(text.split("\n"), 1):
         ws[f"A{i}"] = line
 
-    wb.save(filename)
-    return filename
+    wb.save(buffer)
+    buffer.seek(0)
+    return buffer
 
 
 def export_pdf(text):
-    filename = os.path.join(EXPORT_FOLDER, str(uuid.uuid4()) + ".pdf")
-    doc = SimpleDocTemplate(filename)
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer)
     styles = getSampleStyleSheet()
     elements = []
 
     for line in text.split("\n"):
-        elements.append(Paragraph(line, styles["Normal"]))
+        # Escape text to prevent XML parsing errors in ReportLab
+        elements.append(Paragraph(escape(line), styles["Normal"]))
         elements.append(Spacer(1, 0.2 * inch))
 
     doc.build(elements)
-    return filename
+    buffer.seek(0)
+    return buffer
 
 
 def export_md(text):
-    filename = os.path.join(EXPORT_FOLDER, str(uuid.uuid4()) + ".md")
-    pypandoc.convert_text(
-        text,
-        "md",
-        format="md",
-        outputfile=filename,
-        extra_args=['--standalone']
-    )
-    return filename
+    buffer = io.BytesIO()
+    buffer.write(text.encode("utf-8"))
+    buffer.seek(0)
+    return buffer
 
 
 def export_mp3(text, language='en'):
-    filename = os.path.join(EXPORT_FOLDER, str(uuid.uuid4()) + ".mp3")
+    buffer = io.BytesIO()
     
     # Map Tesseract 3-letter codes to 2-letter ISO codes
     lang_map = {
@@ -74,10 +71,11 @@ def export_mp3(text, language='en'):
     
     try:
         tts = gTTS(text=text, lang=lang)
-        tts.save(filename)
+        tts.write_to_fp(buffer)
     except ValueError:
         # Fallback to English if language is not supported
         tts = gTTS(text=text, lang='en')
-        tts.save(filename)
+        tts.write_to_fp(buffer)
         
-    return filename
+    buffer.seek(0)
+    return buffer

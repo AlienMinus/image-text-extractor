@@ -46,18 +46,28 @@ def export_file():
     if not text:
         return jsonify({"error": "No text provided"}), 400
 
+    buffer = None
+    mimetype = None
+    download_name = f"extracted_text.{filetype}"
+
     if filetype == "docx":
-        filepath = export_docx(text)
+        buffer = export_docx(text)
+        mimetype = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
     elif filetype == "pdf":
-        filepath = export_pdf(text)
+        buffer = export_pdf(text)
+        mimetype = "application/pdf"
     elif filetype == "xlsx":
-        filepath = export_xlsx(text)
+        buffer = export_xlsx(text)
+        mimetype = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     elif filetype == "md":
-        filepath = export_md(text)
+        buffer = export_md(text)
+        mimetype = "text/markdown"
     else:
         return jsonify({"error": "Invalid format"}), 400
 
-    return send_file(filepath, as_attachment=True)
+    return send_file(
+        buffer, mimetype=mimetype, as_attachment=True, download_name=download_name
+    )
 
 
 @main.route("/api/translate", methods=["POST"])
@@ -82,8 +92,10 @@ def generate_audio():
     if not text:
         return jsonify({"error": "No text provided"}), 400
 
-    filepath = export_mp3(text, language)
-    return send_file(filepath, as_attachment=True, mimetype="audio/mpeg")
+    buffer = export_mp3(text, language)
+    return send_file(
+        buffer, mimetype="audio/mpeg", as_attachment=True, download_name="audio.mp3"
+    )
 
 
 @main.route("/api/correct", methods=["POST"])
