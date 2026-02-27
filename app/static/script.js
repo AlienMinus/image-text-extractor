@@ -76,6 +76,10 @@ cameraInput.addEventListener('change', (e) => {
 
 clearPreviewBtn.addEventListener('click', () => {
     destroyCropper();
+    if (imagePreview.dataset.blobUrl) {
+        URL.revokeObjectURL(imagePreview.dataset.blobUrl);
+        imagePreview.dataset.blobUrl = '';
+    }
     selectedFiles = [];
     previewContainer.classList.add('hidden');
     document.querySelector('.upload-container').classList.remove('hidden');
@@ -236,21 +240,28 @@ function handleFiles(files) {
     selectedFiles = validFiles;
     const fileToPreview = selectedFiles[0];
     
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        imagePreview.src = e.target.result;
-        previewContainer.classList.remove('hidden');
-        dropZone.classList.add('hidden');
-        
-        // Disable cropping if multiple files are selected
-        if (selectedFiles.length > 1) {
-            cropBtn.classList.add('hidden');
-            alert(`Batch mode: ${selectedFiles.length} images selected. Cropping is disabled.`);
-        } else {
-            cropBtn.classList.remove('hidden');
-        }
-    };
-    reader.readAsDataURL(fileToPreview);
+    // Use createObjectURL instead of FileReader to save memory on mobile devices
+    const url = URL.createObjectURL(fileToPreview);
+    
+    if (imagePreview.dataset.blobUrl) {
+        URL.revokeObjectURL(imagePreview.dataset.blobUrl);
+    }
+    imagePreview.dataset.blobUrl = url;
+    imagePreview.src = url;
+
+    previewContainer.classList.remove('hidden');
+    // Hide the upload container (both buttons)
+    const uploadContainer = document.querySelector('.upload-container');
+    if (uploadContainer) uploadContainer.classList.add('hidden');
+    else dropZone.classList.add('hidden');
+    
+    // Disable cropping if multiple files are selected
+    if (selectedFiles.length > 1) {
+        cropBtn.classList.add('hidden');
+        alert(`Batch mode: ${selectedFiles.length} images selected. Cropping is disabled.`);
+    } else {
+        cropBtn.classList.remove('hidden');
+    }
 }
 
 function destroyCropper() {
