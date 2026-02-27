@@ -9,3 +9,4 @@ pypandoc
 gunicorn
 deep-translator
 gTTS
+textblob
