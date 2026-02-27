@@ -2,12 +2,93 @@
 <html>
 <head>
     <title>OCR Extractor</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <h2>Upload Image</h2>
-    <form action="/api/extract" method="post" enctype="multipart/form-data">
-        <input type="file" name="image">
-        <button type="submit">Extract</button>
-    </form>
+    <div class="container">
+        <h2>Upload Image</h2>
+        
+        <div id="dropZone" class="drop-zone">
+            <i class="fas fa-cloud-upload-alt fa-3x"></i>
+            <p>Drag & Drop or Click to Upload</p>
+            <button type="button" id="cameraBtn" class="btn-icon" title="Take Photo">
+                <i class="fas fa-camera"></i>
+            </button>
+            <input type="file" id="fileInput" hidden accept="image/*" multiple>
+            <input type="file" id="cameraInput" hidden accept="image/*" capture="environment">
+        </div>
+
+        <div id="previewContainer" class="preview-container hidden">
+            <div class="img-container">
+                <img id="imagePreview" src="" alt="Image Preview">
+            </div>
+            <div class="preview-actions">
+                <button id="cropBtn" class="btn-secondary btn-sm"><i class="fas fa-crop"></i> Crop</button>
+                <button id="saveCropBtn" class="btn-primary btn-sm hidden"><i class="fas fa-check"></i> Save</button>
+                <button id="cancelCropBtn" class="btn-secondary btn-sm hidden"><i class="fas fa-times"></i> Cancel</button>
+            </div>
+            <button id="clearPreview" class="btn-icon-small" title="Remove Image"><i class="fas fa-times"></i></button>
+        </div>
+
+        <div class="controls-group">
+            <select id="languageSelect" class="form-select">
+                <option value="auto" selected>Auto Detect</option>
+                <option value="eng">English</option>
+                <option value="spa">Spanish</option>
+                <option value="fra">French</option>
+                <option value="deu">German</option>
+                <option value="ita">Italian</option>
+            </select>
+            <button id="extractBtn" class="btn-primary" title="Start Extraction"><i class="fas fa-search"></i> Extract Text</button>
+        </div>
+
+        <div id="progressContainer" class="progress-container hidden">
+            <div id="progressBar" class="progress-bar"></div>
+        </div>
+        <div id="loader" class="loader hidden"></div>
+
+        <div id="outputSection" class="hidden">
+            <div class="output-header">
+                <h3>Extracted Text</h3>
+                <button id="clearTextBtn" class="btn-danger" title="Clear Text & History"><i class="fas fa-trash"></i> Clear</button>
+            </div>
+            <textarea id="extractedText" placeholder="Result will appear here..."></textarea>
+            
+            <div class="button-group">
+                <button onclick="copyToClipboard()" class="btn-secondary" title="Copy to Clipboard"><i class="fas fa-copy"></i></button>
+                <button onclick="toggleSTT()" id="sttBtn" class="btn-secondary" title="Dictate (Speech to Text)"><i class="fas fa-microphone"></i></button>
+                <button onclick="downloadAudio('extractedText', 'languageSelect')" class="btn-secondary" title="Download Audio"><i class="fas fa-file-audio"></i></button>
+                <button onclick="speakText('extractedText', 'languageSelect')" class="btn-secondary" title="Read Aloud"><i class="fas fa-volume-up"></i></button>
+                <button onclick="exportFile('docx')" class="btn-secondary" title="Export as DOCX"><i class="fas fa-file-word"></i></button>
+                <button onclick="exportFile('pdf')" class="btn-secondary" title="Export as PDF"><i class="fas fa-file-pdf"></i></button>
+                <button onclick="exportFile('xlsx')" class="btn-secondary" title="Export as Excel"><i class="fas fa-file-excel"></i></button>
+                <button onclick="exportFile('md')" class="btn-secondary" title="Export as Markdown"><i class="fas fa-file-code"></i></button>
+            </div>
+
+            <div class="translation-section">
+                <h3>Translate Text</h3>
+                <div class="controls-group">
+                    <select id="targetLang" class="form-select">
+                        <option value="hi">Hindi</option>
+                        <option value="or">Odia</option>
+                        <option value="en">English</option>
+                        <option value="es">Spanish</option>
+                        <option value="fr">French</option>
+                        <option value="de">German</option>
+                    </select>
+                    <button id="translateActionBtn" class="btn-primary"><i class="fas fa-language"></i> Translate</button>
+                </div>
+                <textarea id="translatedText" class="hidden" placeholder="Translated text will appear here..."></textarea>
+                <div id="translationActions" class="button-group hidden" style="margin-top: 10px;">
+                    <button onclick="downloadAudio('translatedText', 'targetLang')" class="btn-secondary" title="Download Audio"><i class="fas fa-file-audio"></i></button>
+                    <button onclick="speakText('translatedText', 'targetLang')" class="btn-secondary" title="Read Aloud"><i class="fas fa-volume-up"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
