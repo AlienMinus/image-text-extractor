@@ -1,0 +1,8 @@
+services:
+  - type: web
+    name: image-ocr-api
+    runtime: docker
+    repo: https://github.com/YOUR_USERNAME/YOUR_REPO
+    plan: free
+    branch: main
+    autoDeploy: true

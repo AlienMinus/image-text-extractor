@@ -1,0 +1,9 @@
+Flask
+flask-cors
+pytesseract
+Pillow
+python-docx
+openpyxl
+reportlab
+pypandoc
+gunicorn
