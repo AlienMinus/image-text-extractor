@@ -237,31 +237,32 @@ function handleFiles(files) {
         return;
     }
     
-    selectedFiles = validFiles;
-    const fileToPreview = selectedFiles[0];
-    
-    // Use createObjectURL instead of FileReader to save memory on mobile devices
-    const url = URL.createObjectURL(fileToPreview);
-    
-    if (imagePreview.dataset.blobUrl) {
-        URL.revokeObjectURL(imagePreview.dataset.blobUrl);
-    }
-    imagePreview.dataset.blobUrl = url;
-    imagePreview.src = url;
+    // Resize the first image to prevent low memory crashes on mobile
+    resizeImage(validFiles[0], 1280, 1280, (resizedBlob) => {
+        selectedFiles = validFiles;
+        // Replace the first file with the resized version for processing
+        selectedFiles[0] = resizedBlob;
+        
+        const url = URL.createObjectURL(resizedBlob);
+        
+        if (imagePreview.dataset.blobUrl) {
+            URL.revokeObjectURL(imagePreview.dataset.blobUrl);
+        }
+        imagePreview.dataset.blobUrl = url;
+        imagePreview.src = url;
 
-    previewContainer.classList.remove('hidden');
-    // Hide the upload container (both buttons)
-    const uploadContainer = document.querySelector('.upload-container');
-    if (uploadContainer) uploadContainer.classList.add('hidden');
-    else dropZone.classList.add('hidden');
-    
-    // Disable cropping if multiple files are selected
-    if (selectedFiles.length > 1) {
-        cropBtn.classList.add('hidden');
-        alert(`Batch mode: ${selectedFiles.length} images selected. Cropping is disabled.`);
-    } else {
-        cropBtn.classList.remove('hidden');
-    }
+        previewContainer.classList.remove('hidden');
+        const uploadContainer = document.querySelector('.upload-container');
+        if (uploadContainer) uploadContainer.classList.add('hidden');
+        else dropZone.classList.add('hidden');
+        
+        if (selectedFiles.length > 1) {
+            cropBtn.classList.add('hidden');
+            alert(`Batch mode: ${selectedFiles.length} images selected. Cropping is disabled.`);
+        } else {
+            cropBtn.classList.remove('hidden');
+        }
+    });
 }
 
 function destroyCropper() {
@@ -454,4 +455,53 @@ async function correctSpelling() {
         console.error('Error:', error);
         alert('Failed to correct spelling.');
     }
+}
+
+function resizeImage(file, maxWidth, maxHeight, callback) {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    
+    img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+        let shouldResize = false;
+
+        if (width > maxWidth || height > maxHeight) {
+            shouldResize = true;
+            if (width > height) {
+                if (width > maxWidth) {
+                    height = Math.round(height * (maxWidth / width));
+                    width = maxWidth;
+                }
+            } else {
+                if (height > maxHeight) {
+                    width = Math.round(width * (maxHeight / height));
+                    height = maxHeight;
+                }
+            }
+        }
+
+        if (shouldResize) {
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            canvas.toBlob((blob) => {
+                URL.revokeObjectURL(url);
+                callback(blob);
+            }, file.type || 'image/jpeg', 0.8);
+        } else {
+            URL.revokeObjectURL(url);
+            callback(file);
+        }
+    };
+    
+    img.onerror = () => {
+        URL.revokeObjectURL(url);
+        callback(file);
+    };
+    
+    img.src = url;
 }
