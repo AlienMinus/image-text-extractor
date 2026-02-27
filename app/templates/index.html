@@ -88,6 +88,17 @@
             </div>
         </div>
     </div>
+
+    <div id="cameraModal" class="camera-modal hidden">
+        <div class="camera-content">
+            <video id="cameraFeed" autoplay playsinline></video>
+            <canvas id="cameraCanvas" class="hidden"></canvas>
+            <div class="camera-controls">
+                <button id="snapBtn" class="btn-primary"><i class="fas fa-camera"></i> Snap</button>
+                <button id="closeCameraBtn" class="btn-secondary"><i class="fas fa-times"></i> Close</button>
+            </div>
+        </div>
+    </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>

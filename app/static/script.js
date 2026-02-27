@@ -18,6 +18,12 @@ const translateActionBtn = document.getElementById('translateActionBtn');
 const translatedText = document.getElementById('translatedText');
 const translationActions = document.getElementById('translationActions');
 const clearTextBtn = document.getElementById('clearTextBtn');
+const cameraModal = document.getElementById('cameraModal');
+const cameraFeed = document.getElementById('cameraFeed');
+const cameraCanvas = document.getElementById('cameraCanvas');
+const snapBtn = document.getElementById('snapBtn');
+const closeCameraBtn = document.getElementById('closeCameraBtn');
+let stream = null;
 
 document.addEventListener('DOMContentLoaded', () => {
     const savedExtracted = localStorage.getItem('extractedText');
@@ -66,9 +72,39 @@ fileInput.addEventListener('change', (e) => {
     if (e.target.files.length) handleFiles(e.target.files);
 });
 
-cameraBtn.addEventListener('click', (e) => {
+cameraBtn.addEventListener('click', async (e) => {
     e.stopPropagation();
-    cameraInput.click();
+    
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        cameraInput.click(); // Fallback to native input
+        return;
+    }
+
+    try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        cameraFeed.srcObject = stream;
+        cameraModal.classList.remove('hidden');
+    } catch (err) {
+        console.error("Camera access error:", err);
+        cameraInput.click(); // Fallback
+    }
+});
+
+closeCameraBtn.addEventListener('click', stopCamera);
+
+snapBtn.addEventListener('click', () => {
+    const context = cameraCanvas.getContext('2d');
+    cameraCanvas.width = cameraFeed.videoWidth;
+    cameraCanvas.height = cameraFeed.videoHeight;
+    context.drawImage(cameraFeed, 0, 0, cameraCanvas.width, cameraCanvas.height);
+    
+    cameraCanvas.toBlob((blob) => {
+        if (blob) {
+            const file = new File([blob], "camera_capture.png", { type: "image/png" });
+            handleFiles([file]);
+        }
+        stopCamera();
+    }, 'image/png');
 });
 
 cameraInput.addEventListener('change', (e) => {
@@ -262,6 +298,14 @@ function destroyCropper() {
     cropBtn.classList.remove('hidden');
     saveCropBtn.classList.add('hidden');
     cancelCropBtn.classList.add('hidden');
+}
+
+function stopCamera() {
+    if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        stream = null;
+    }
+    cameraModal.classList.add('hidden');
 }
 
 async function exportFile(format) {
